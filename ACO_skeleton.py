@@ -108,6 +108,7 @@ class AntforTSP(object):
         threats = set(np.arange(num, 0, -self.n))  #rows back
         threats = threats.union(set(np.arange(num, self.n ** 2, self.n))) #rows front
         threats = threats.union(set([num + j for j in range(self.n - num % self.n)]))
+        threats = threats.union(set([num - j for j in range(num % self.n)]))
 
         threats.remove(num)
         print("queen at", num)

@@ -66,7 +66,7 @@ class AntforTSP(object):
         for path, dist in sorted_paths[:Nsel]:
             for i in range (len(path)-1):
                 self.pheromone[path[i],path[i+1]] += 1.0 / self.Graph[path[i],path[i+1]]  # dist
-
+        #ERRRROR
         """
         This method generates paths for the entire colony for a concrete iteration.
         The input, 'path', is a list of edges, each represented by a pair of nodes.

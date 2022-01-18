@@ -6,7 +6,6 @@ Updated on Tue Jan 7 20:30:01 2020
 Based on code by <github/Akavall>
 """
 import numpy as np
-
 """
 A class for defining an Ant Colony Optimizer for TSP-solving.
 The c'tor receives the following arguments:
@@ -25,14 +24,15 @@ class AntforTSP(object):
         self.n = n #husein graph N**2 col N rows
         self.Graph = np.array([(np.arange(1,n**2 + 1)) for i in range(n)])
         self.Nant = Nant
+        #self.ants = [Ant(n) for _ in range (Nant)]
         self.Niter = Niter
         self.rho = rho
         self.alpha = alpha
         self.beta = beta
         self.pheromone = np.ones(self.Graph.shape) / len(self.Graph)
         self.local_state = np.random.RandomState(seed)
-        self.threat_cnt = np.empty(n ** 2 )
-        #print(self.threat_cnt)
+        self.threat_cnt = np.array([np.zeros(n ** 2 , dtype='int64') for _ in range (self.Nant)])
+        #each ant is a solution so has a N*N threat matrix
         """
         This method invokes the ACO search over the N queen graph.
         It returns the best tour located during the search.
@@ -61,6 +61,11 @@ class AntforTSP(object):
         """
 
     def depositPheronomes(self, all_paths):
+        """
+        TODO
+        :param all_paths:
+        :return:
+        """
         sorted_paths = sorted(all_paths, key=lambda x: x[1])
         Nsel = int(self.Nant / 4)  # Proportion of updated paths
         for path, dist in sorted_paths[:Nsel]:
@@ -73,59 +78,69 @@ class AntforTSP(object):
         Therefore, each 'arc' is a pair of nodes, and thus Graph[arc] is well-defined as the edges' length.
         """
 
-    def evalTour(self, path):
+    def evalTour(self, path, iAnt):
+        #cost of path is sum of all threats where queens placed
+        return np.sum(self.threat_cnt[iAnt][path])
 
-        return np.sum(self.threat_cnt[path])
 
 
-
-    def constructSolution(self, start):
-        path = []
+    def constructSolution(self, start, iAnt):
+        path = []  #to consturct solution we need a place for n queens
         visited = set()
         prev = start
         path.append(prev)
-        self.threat_cnt_update(prev)
+        self.threat_cnt_update(prev, iAnt) #to eval solution we need to consider threats
         visited.add(start)
         for i in range(self.n):
             next_v = self.nextMove(self.pheromone[i][:], self.Graph[i][:], visited)
             visited.add(next_v)
-            self.threat_cnt_update(next_v)
+            self.threat_cnt_update(next_v, iAnt)
             path.append(next_v)
 
+        print(self.threat_cnt[iAnt]) #each ant is a solution so has a N*N threat matrix flatted to N**2 list
         return path
         """
         This method generates 'Nant' paths, for the entire colony, representing a single iteration.
         """
 
 
-    def threat_cnt_update(self, num):
+    def threat_cnt_update(self, num, iAnt):
         n = self.n
         row = num % n
         col = num // n
-        print(row)
-        print(col)
-        threats = set(np.arange(num, -1, -n))  #rows back
-        threats = threats.union(set(np.arange(num, n ** 2, n))) #rows front
-        threats = threats.union(set([num + j for j in range(n - row)]))
-        threats = threats.union(set([num - j for j in range(row)]))
 
-        threats = threats.union(set([num + (n+1) * i for i in range(min(n-row, n-col))])) #diag for down
-        threats = threats.union(set([num - ((n+1) * i) for i in range(min(n-row, col))])) #diag back top
-        threats = threats.union(set([num + ((n - 1) * i) for i in range(min(row, n - col))])) #diag for top
-        threats = threats.union(set([num - ((n + 1) * i) for i in range(min(row, col))])) # diag back down
-        threats.remove(num)
-        threats = list(threats)
-        print("queen at", num)
-        print("threats",threats)
-        self.threat_cnt[threats] += 1
+        threats = np.zeros((n,n), dtype='int64')
 
+        for j in range(1, row + 1):
+            threats[col][row-j]+= 1 #update col
+        for j in range(1, n - row):
+            threats[col][row + j] += 1
+        for j in range(1, n - col):
+            threats[col + j][row] += 1  # update row fron
+            if row + j < n:  # update upper diagonal
+                threats[col + j][row + j] += 1
+            if row - j > 0:  # update lower diagonal
+                threats[col + j][row - j] += 1
+        for j in range(1, col + 1):
+            threats[col - j][row] += 1  # update row back
+            if row + j < n:  # update lower diagonal
+                threats[col - j][row + j] += 1
+            if row - j > 0 :  # update upper diagonal
+                threats[col - j][row - j] += 1
+
+        threats = np.ravel(threats)
+
+        # print("queen at", num)
+        # print("threats",threats)
+        self.threat_cnt[iAnt] = self.threat_cnt[iAnt] + threats
 
     def constructColonyPaths(self):
         # TODO 3
+        self.threat_cnt.fill(0)  #zero all threats
         paths = []  # all Nant paths of graph size
-        for i in range(self.Nant):
-            sol = self.constructSolution(0)
-            paths.append((sol, self.evalTour(sol) ))
+        for i in range(self.Nant): #run all ants
+            sol = self.constructSolution(0, i)
+            paths.append((sol, self.evalTour(sol, i) ))
         return paths
         """"""
 

@@ -92,7 +92,7 @@ class AntforTSP(object):
         self.threat_cnt.fill(0)  # zero all threats
         paths = []  # all Nant paths of graph size
         for i in range(self.Nant):  # run all ants
-            sol = self.constructSolution(4, i)
+            sol = self.constructSolution(self.n//2, i)
             paths.append((sol, self.evalTour(sol, i)))  # paths is tuple of sol X and f(x) fitnes
         return paths
         """"""
@@ -161,9 +161,9 @@ class AntforTSP(object):
         return node
 
 if __name__ == "__main__" :
-    Niter = 1000
+    Niter = 10**4
     Nant = 200
-    n = 8
+    n = 16
     ant_colony = AntforTSP(n, Nant, Niter, rho=0.95, alpha=1.5, beta=1.5)
     shortest_path = ant_colony.run()
     print(shortest_path)

@@ -31,6 +31,7 @@ class AntforTSP(object):
         self.beta = beta
         self.pheromone = np.ones(self.Graph.shape) / len(self.Graph)
         self.local_state = np.random.RandomState(seed)
+        self.varian = self.local_state.randint(2,n//3)
         self.threat_cnt = np.array([np.zeros(n ** 2 , dtype='int64') for _ in range (self.Nant)])
         #each ant is a solution so has a N*N threat matrix
         """
@@ -45,16 +46,26 @@ class AntforTSP(object):
         # Book-keeping: best tour ever
         shortest_path = None
         best_path = ("TBD", np.inf)
+        count = 0
         for i in range(self.Niter):
             all_paths = self.constructColonyPaths()
             self.depositPheronomes(all_paths)
             shortest_path = min(all_paths, key=lambda x: x[1])
             print(i + 1, ": ", shortest_path[1])
-            print(shortest_path[0]) #not minimizing
+            print(shortest_path[0])
+
             if shortest_path[1] < best_path[1]:
                 best_path = shortest_path
+                count = 0
                 if shortest_path[1] == 0 :
                     return shortest_path
+
+            else : count += 1
+            if count > 200 :
+                print('e')
+                self.varian = self.local_state.randint(2,n//3)
+                count = 0
+
             self.pheromone *= self.rho  # evaporation
 
         return best_path
@@ -76,7 +87,7 @@ class AntforTSP(object):
         for path, cost in sorted_paths[:Nsel]:
             for i in range (len(path)-1):
                 self.pheromone[i,path[i]] += 1.0 / self.Graph[i,path[i]]  # dist
-        #ERRRROR
+
         """
         This method generates paths for the entire colony for a concrete iteration.
         The input, 'path', is a list of edges, each represented by a pair of nodes.
@@ -88,14 +99,15 @@ class AntforTSP(object):
         return np.sum(self.threat_cnt[iAnt][path])
 
     def constructColonyPaths(self):
-        # TODO find heuristic for starting node not 0 default
+        # TODO find heuristic for starting node
         self.threat_cnt.fill(0)  # zero all threats
         paths = []  # all Nant paths of graph size
+
         for i in range(self.Nant):  # run all ants
-            row = self.pheromone ** self.alpha * ((1.0 / self.Graph) ** self.beta)
-            norm_row = row / row.sum()
-            node = self.local_state.choice(range(self.n ** 2), 1, p=norm_row)[0]
-            sol = self.constructSolution(self.local_state.randint(0,self.n**2), i)
+            # row = self.pheromone ** self.alpha * ((1.0 / self.Graph) ** self.beta)
+            # norm_row = row / row.sum()
+            # node = self.local_state.choice(range(self.n ** 2), 1, p=norm_row)[0]
+            sol = self.constructSolution(n//self.varian, i)
             paths.append((sol, self.evalTour(sol, i)))  # paths is tuple of sol X and f(x) fitnes
         return paths
         """"""

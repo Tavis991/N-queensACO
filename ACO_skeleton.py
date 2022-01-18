@@ -22,7 +22,7 @@ The c'tor receives the following arguments:
 class AntforTSP(object):
     def __init__(self, n, Nant, Niter, rho, alpha=1, beta=1, seed=None):
         self.n = n #husein graph N**2 col N rows
-        self.Graph = np.array([(np.arange(1,n**2 + 1)) for i in range(n)])
+        self.Graph = np.array([(np.arange(1,n**2 + 1)) for i in range(n - 1)])
         self.Nant = Nant
         #self.ants = [Ant(n) for _ in range (Nant)]
         self.Niter = Niter
@@ -41,6 +41,7 @@ class AntforTSP(object):
         """
 
     def run(self):
+        """TODO"""
         # Book-keeping: best tour ever
         shortest_path = None
         best_path = ("TBD", np.inf)
@@ -49,6 +50,7 @@ class AntforTSP(object):
             self.depositPheronomes(all_paths)
             shortest_path = min(all_paths, key=lambda x: x[1])
             print(i + 1, ": ", shortest_path[1])
+            print(shortest_path[0]) #not minimizing
             if shortest_path[1] < best_path[1]:
                 best_path = shortest_path
             self.pheromone *= self.rho  # evaporation
@@ -68,9 +70,9 @@ class AntforTSP(object):
         """
         sorted_paths = sorted(all_paths, key=lambda x: x[1])
         Nsel = int(self.Nant / 4)  # Proportion of updated paths
-        for path, dist in sorted_paths[:Nsel]:
+        for path, cost in sorted_paths[:Nsel]:
             for i in range (len(path)-1):
-                self.pheromone[path[i],path[i+1]] += 1.0 / self.Graph[path[i],path[i+1]]  # dist
+                self.pheromone[i,path[i]] += 1.0 / self.Graph[i,path[i]]  # dist
         #ERRRROR
         """
         This method generates paths for the entire colony for a concrete iteration.
@@ -82,6 +84,15 @@ class AntforTSP(object):
         #cost of path is sum of all threats where queens placed
         return np.sum(self.threat_cnt[iAnt][path])
 
+    def constructColonyPaths(self):
+        # TODO find heuristic for starting node not 0 default
+        self.threat_cnt.fill(0)  # zero all threats
+        paths = []  # all Nant paths of graph size
+        for i in range(self.Nant):  # run all ants
+            sol = self.constructSolution(0, i)
+            paths.append((sol, self.evalTour(sol, i)))  # paths is tuple of sol X and f(x) fitnes
+        return paths
+        """"""
 
 
     def constructSolution(self, start, iAnt):
@@ -91,13 +102,13 @@ class AntforTSP(object):
         path.append(prev)
         self.threat_cnt_update(prev, iAnt) #to eval solution we need to consider threats
         visited.add(start)
-        for i in range(self.n):
+        for i in range(self.n - 1):
             next_v = self.nextMove(self.pheromone[i][:], self.Graph[i][:], visited)
             visited.add(next_v)
             self.threat_cnt_update(next_v, iAnt)
             path.append(next_v)
 
-        print(self.threat_cnt[iAnt]) #each ant is a solution so has a N*N threat matrix flatted to N**2 list
+        #print(self.threat_cnt[iAnt]) #each ant is a solution so has a N*N threat matrix flatted to N**2 list
         return path
         """
         This method generates 'Nant' paths, for the entire colony, representing a single iteration.
@@ -134,15 +145,7 @@ class AntforTSP(object):
         # print("threats",threats)
         self.threat_cnt[iAnt] = self.threat_cnt[iAnt] + threats
 
-    def constructColonyPaths(self):
-        # TODO 3
-        self.threat_cnt.fill(0)  #zero all threats
-        paths = []  # all Nant paths of graph size
-        for i in range(self.Nant): #run all ants
-            sol = self.constructSolution(0, i)
-            paths.append((sol, self.evalTour(sol, i) ))
-        return paths
-        """"""
+
 
     def nextMove(self, pheromone, dist, visited):
         pheromone = np.copy(pheromone)  # Careful

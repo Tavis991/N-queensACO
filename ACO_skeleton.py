@@ -148,14 +148,9 @@ class AntforTSP(object):
 
 
     def nextMove(self, pheromone, dist, visited):
+        """TODO"""
         pheromone = np.copy(pheromone)  # Careful
-        """This method probabilistically calculates the next move (node) given a neighboring 
-        information per a single ant at a specified node.
-        Importantly, 'pheromone' is a specific row out of the original matrix, representing the neighbors of the current node.
-        Similarly, 'dist' is the row out of the original graph, associated with the neighbors of the current node.
-        'visited' is a set of nodes - whose probability weights are constructed as zeros, to eliminate revisits.
-        The random generation relies on norm_row, as a vector of probabilities, using the numpy function 'choice'
-        : python passes arguments "by-object"; pheromone is mutable"""
+
         pheromone[list(visited)] = 0
         row = pheromone ** self.alpha * ((1.0 / dist) ** self.beta)
         norm_row = row / row.sum()

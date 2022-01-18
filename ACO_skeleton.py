@@ -22,7 +22,7 @@ The c'tor receives the following arguments:
 class AntforTSP(object):
     def __init__(self, n, Nant, Niter, rho, alpha=1, beta=1, seed=None):
         self.n = n #husein graph N**2 col N rows
-        self.Graph = np.array([(np.arange(1,n**2 + 1)) for i in range(n - 1)])
+        self.Graph = np.array([np.full((n**2), n) for i in range(n - 1)])
         self.Nant = Nant
         #self.ants = [Ant(n) for _ in range (Nant)]
         self.Niter = Niter
@@ -53,7 +53,10 @@ class AntforTSP(object):
             print(shortest_path[0]) #not minimizing
             if shortest_path[1] < best_path[1]:
                 best_path = shortest_path
+                if shortest_path[1] == 0 :
+                    return shortest_path
             self.pheromone *= self.rho  # evaporation
+
         return best_path
 
         """
@@ -89,7 +92,7 @@ class AntforTSP(object):
         self.threat_cnt.fill(0)  # zero all threats
         paths = []  # all Nant paths of graph size
         for i in range(self.Nant):  # run all ants
-            sol = self.constructSolution(0, i)
+            sol = self.constructSolution(4, i)
             paths.append((sol, self.evalTour(sol, i)))  # paths is tuple of sol X and f(x) fitnes
         return paths
         """"""
@@ -163,3 +166,4 @@ if __name__ == "__main__" :
     n = 8
     ant_colony = AntforTSP(n, Nant, Niter, rho=0.95, alpha=1.5, beta=1.5)
     shortest_path = ant_colony.run()
+    print(shortest_path)

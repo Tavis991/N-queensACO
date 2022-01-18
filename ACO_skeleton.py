@@ -92,7 +92,10 @@ class AntforTSP(object):
         self.threat_cnt.fill(0)  # zero all threats
         paths = []  # all Nant paths of graph size
         for i in range(self.Nant):  # run all ants
-            sol = self.constructSolution(self.n//2, i)
+            row = self.pheromone ** self.alpha * ((1.0 / self.Graph) ** self.beta)
+            norm_row = row / row.sum()
+            node = self.local_state.choice(range(self.n ** 2), 1, p=norm_row)[0]
+            sol = self.constructSolution(self.local_state.randint(0,self.n**2), i)
             paths.append((sol, self.evalTour(sol, i)))  # paths is tuple of sol X and f(x) fitnes
         return paths
         """"""
@@ -122,7 +125,6 @@ class AntforTSP(object):
         n = self.n
         row = num % n
         col = num // n
-
         threats = np.zeros((n,n), dtype='int64')
 
         for j in range(1, row + 1):
@@ -143,15 +145,9 @@ class AntforTSP(object):
                 threats[col - j][row - j] += 1
 
         threats = np.ravel(threats)
-
-        # print("queen at", num)
-        # print("threats",threats)
         self.threat_cnt[iAnt] = self.threat_cnt[iAnt] + threats
 
-
-
     def nextMove(self, pheromone, dist, visited):
-        """TODO"""
         pheromone = np.copy(pheromone)  # Careful
 
         pheromone[list(visited)] = 0

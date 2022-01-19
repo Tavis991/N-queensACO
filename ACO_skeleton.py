@@ -30,9 +30,13 @@ class AntforTSP(object):
         self.alpha = alpha
         self.beta = beta
         self.pheromone = np.ones(self.Graph.shape) / len(self.Graph)
+        self.best_pher = np.copy(self.pheromone)
         self.local_state = np.random.RandomState(seed)
-        self.varian = self.local_state.randint(2,n//3)
+        #self.varian = self.local_state.randint(2,n//3)
         self.threat_cnt = np.array([np.zeros(n ** 2 , dtype='int64') for _ in range (self.Nant)])
+        self.pheromone_pop = [np.copy(self.pheromone) for i in range (5)] #pheromn pop
+       # self.i_varian = [i for i in range(1,n//2)]
+
         #each ant is a solution so has a N*N threat matrix
         """
         This method invokes the ACO search over the N queen graph.
@@ -56,14 +60,20 @@ class AntforTSP(object):
 
             if shortest_path[1] < best_path[1]:
                 best_path = shortest_path
+                self.pheromone_pop.pop()
+                self.pheromone_pop.insert(0, np.copy(self.pheromone))
+                self.best_pher = np.copy(self.pheromone)
                 count = 0
+
                 if shortest_path[1] == 0 :
                     return shortest_path
 
             else : count += 1
-            if count > 200 :
+            if count > 155 :
                 print('e')
-                self.varian = self.local_state.randint(2,n//3)
+                ch = self.local_state.choice(range(len(self.pheromone_pop)), 1)[0]
+                print(ch)
+                self.pheromone = self.constructPher(self.pheromone, self.pheromone_pop[ch])
                 count = 0
 
             self.pheromone *= self.rho  # evaporation
@@ -107,7 +117,7 @@ class AntforTSP(object):
             # row = self.pheromone ** self.alpha * ((1.0 / self.Graph) ** self.beta)
             # norm_row = row / row.sum()
             # node = self.local_state.choice(range(self.n ** 2), 1, p=norm_row)[0]
-            sol = self.constructSolution(n//self.varian, i)
+            sol = self.constructSolution(n//3, i)
             paths.append((sol, self.evalTour(sol, i)))  # paths is tuple of sol X and f(x) fitnes
         return paths
         """"""
@@ -168,10 +178,19 @@ class AntforTSP(object):
         node = self.local_state.choice(range(self.n ** 2), 1, p=norm_row)[0]
         return node
 
+    def constructPher(self, pheromone1, pheromone2):
+        new_ph  = np.copy (pheromone2)
+        idx = len(pheromone1)
+        print(idx)
+        ch = self.local_state.choice(range(idx), idx//3)
+        print(ch)
+        new_ph[ch] = np.copy(pheromone1[ch])
+        return new_ph
+
 if __name__ == "__main__" :
     Niter = 10**4
     Nant = 200
     n = 16
-    ant_colony = AntforTSP(n, Nant, Niter, rho=0.95, alpha=1.5, beta=1.5)
+    ant_colony = AntforTSP(n, Nant, Niter, rho=0.92, alpha=1.5, beta=1.5)
     shortest_path = ant_colony.run()
     print(shortest_path)

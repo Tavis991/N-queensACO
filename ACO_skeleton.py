@@ -70,7 +70,7 @@ class AntforTSP(object):
 
             else : count += 1
             if count > 155 :
-                print('e')
+                print('ee')
                 ch = self.local_state.choice(range(len(self.pheromone_pop)), 1)[0]
                 print(ch)
                 self.pheromone = self.constructPher(self.pheromone, self.pheromone_pop[ch])
